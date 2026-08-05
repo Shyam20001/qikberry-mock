@@ -409,9 +409,11 @@ qikberry-api/
 
 This assessment-focused project does **not** include:
 
-- Vitest
 - unit tests
-- Docker
+- linter
+- prettier
+- Docker or docker-compose
+- husky
 
 That is intentional because they were **not part of the interview assessment scope**. The implementation stays aligned with the requested backend features instead of adding extra infrastructure or test layers that were not asked for.
 
