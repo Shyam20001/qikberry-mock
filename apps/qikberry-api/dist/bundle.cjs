@@ -592,9 +592,10 @@ var app_default = app;
 // src/main.ts
 import_dotenv2.default.config();
 var PORT = Number(process.env.PORT || 5e3);
+var HOST = String(process.env.HOST || "127.0.0.1");
 var start = async () => {
-  const server = app_default.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}/healthz`);
+  const server = app_default.listen(PORT, HOST, () => {
+    console.log(`Server running on http://${HOST}:${PORT}/healthz`);
   });
   const shutdown = () => {
     console.log("\nGracefully shutting down...");
