@@ -1,6 +1,6 @@
 {
   "name": "qikberry-api",
-  "version": "0.0.1",
+  "version": "1.0.1",
   "scripts": {
     "dev": "nodemon dist/bundle.cjs",
     "build": "node esbuild.config.mjs",
