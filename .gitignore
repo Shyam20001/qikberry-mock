@@ -1,0 +1,6 @@
+# GHIDORA Root
+node_modules
+.ghidora
+.env
+.env.local
+.env.production

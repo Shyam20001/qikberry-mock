@@ -1,0 +1,592 @@
+openapi: 3.0.3
+info:
+  title: QikBerry-Event Ticket API
+  version: 1.0.0
+  description: |
+    API documentation for the event ticket system.
+    This file documents authentication, event browsing, ticket booking, and user ticket lookup.
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+
+tags:
+  - name: Health
+    description: Service health check
+  - name: Auth
+    description: Registration and login
+  - name: Events
+    description: Browse events and create events
+  - name: Bookings
+    description: Book and list tickets
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ApiSuccess:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required: [success]
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        details:
+          nullable: true
+      required: [success, message]
+
+    RegisterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: Shyam
+          description: Full name of the user.
+        email:
+          type: string
+          format: email
+          example: shyam@example.com
+          description: Unique email address used for login.
+        password:
+          type: string
+          minLength: 8
+          example: StrongPass123
+          description: Password for the account.
+      required: [name, email, password]
+      additionalProperties: false
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: shyam@example.com
+          description: Registered email address.
+        password:
+          type: string
+          minLength: 8
+          example: StrongPass123
+          description: Account password.
+      required: [email, password]
+      additionalProperties: false
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: Shyam
+        email:
+          type: string
+          format: email
+          example: shyam@example.com
+        role:
+          type: string
+          enum: [user, admin]
+          example: user
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, email, role]
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        token:
+          type: string
+          description: JWT access token to use in Authorization header.
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        user:
+          $ref: "#/components/schemas/AuthUser"
+      required: [success, token, user]
+
+    EventObject:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 66af8f1e2c9b1b0012345678
+        title:
+          type: string
+          example: Tech Conference 2026
+          description: Event title.
+        description:
+          type: string
+          example: Annual tech conference with talks and workshops.
+          description: Event description.
+        date:
+          type: string
+          format: date-time
+          example: "2026-09-10T09:30:00.000Z"
+          description: Event date and time.
+        location:
+          type: string
+          example: Chennai
+          description: Event venue or location.
+        totalTickets:
+          type: integer
+          example: 500
+          description: Total number of tickets created for the event.
+        availableTickets:
+          type: integer
+          example: 476
+          description: Remaining tickets available for booking.
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Free-form extra fields for the event.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        [
+          _id,
+          title,
+          description,
+          date,
+          location,
+          totalTickets,
+          availableTickets,
+        ]
+
+    CreateEventRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 2
+          maxLength: 200
+          example: Tech Conference 2026
+          description: Event title displayed to users.
+        description:
+          type: string
+          minLength: 5
+          maxLength: 5000
+          example: Annual tech conference with talks and workshops.
+          description: Detailed event description.
+        date:
+          type: string
+          format: date-time
+          example: "2026-09-10T09:30:00.000Z"
+          description: Event date/time in ISO 8601 format.
+        location:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: Chennai
+          description: Event venue or city.
+        totalTickets:
+          type: integer
+          minimum: 1
+          example: 500
+          description: Total tickets to create.
+        metadata:
+          type: object
+          additionalProperties: true
+          example:
+            speakers:
+              - name: Alice
+              - name: Bob
+          description: Optional extra fields.
+      required: [title, description, date, location, totalTickets]
+      additionalProperties: false
+
+    ListEventsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        total:
+          type: integer
+          example: 42
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventObject"
+      required: [success, page, limit, total, items]
+
+    BookTicketRequest:
+      type: object
+      properties:
+        eventId:
+          type: string
+          pattern: "^[a-fA-F0-9]{24}$"
+          example: 66af8f1e2c9b1b0012345678
+          description: MongoDB ObjectId of the event.
+        ticketCount:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 1
+          example: 2
+          description: Number of tickets to book.
+      required: [eventId]
+      additionalProperties: false
+
+    BookingObject:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 91
+        userId:
+          type: integer
+          format: int64
+          example: 1
+        eventId:
+          type: string
+          example: 66af8f1e2c9b1b0012345678
+        ticketCount:
+          type: integer
+          example: 2
+        status:
+          type: string
+          enum: [confirmed, cancelled]
+          example: confirmed
+        bookedAt:
+          type: string
+          format: date-time
+      required: [id, userId, eventId, ticketCount, status, bookedAt]
+
+    MyTicketsItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 91
+        eventId:
+          type: string
+          example: 66af8f1e2c9b1b0012345678
+        eventTitle:
+          type: string
+          nullable: true
+          example: Tech Conference 2026
+        eventDate:
+          type: string
+          format: date-time
+          nullable: true
+        eventLocation:
+          type: string
+          nullable: true
+          example: Chennai
+        ticketCount:
+          type: integer
+          example: 2
+        status:
+          type: string
+          enum: [confirmed, cancelled]
+          example: confirmed
+        bookedAt:
+          type: string
+          format: date-time
+      required: [id, eventId, ticketCount, status, bookedAt]
+
+    MyTicketsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        count:
+          type: integer
+          example: 1
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MyTicketsItem"
+      required: [success, count, items]
+
+paths:
+  /healthz:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Returns a simple OK response so you can verify that the API is running.
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiSuccess"
+
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      description: Creates a new user account and returns a JWT token plus the user profile.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+            examples:
+              default:
+                summary: Example registration payload
+                value:
+                  name: Shyam
+                  email: shyam@example.com
+                  password: StrongPass123
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login and generate token
+      description: Validates email and password, then returns a JWT token and the user profile.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            examples:
+              default:
+                summary: Example login payload
+                value:
+                  email: shyam@example.com
+                  password: StrongPass123
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/events:
+    get:
+      tags: [Events]
+      summary: List events
+      description: Returns paginated event data. No authentication required.
+      parameters:
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number.
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Number of items per page.
+      responses:
+        "200":
+          description: Event list returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEventsResponse"
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      tags: [Events]
+      summary: Create an event
+      description: Creates a new event. Requires a valid JWT and admin role.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEventRequest"
+            examples:
+              default:
+                summary: Example create event payload
+                value:
+                  title: Tech Conference 2026
+                  description: Annual tech conference with talks and workshops.
+                  date: "2026-09-10T09:30:00.000Z"
+                  location: Chennai
+                  totalTickets: 500
+                  metadata:
+                    speakers:
+                      - name: Alice
+                      - name: Bob
+      responses:
+        "201":
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  event:
+                    $ref: "#/components/schemas/EventObject"
+                required: [success, event]
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/bookings/book:
+    post:
+      tags: [Bookings]
+      summary: Book tickets
+      description: Books 1 to 10 tickets for an event. Requires a valid JWT.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookTicketRequest"
+            examples:
+              default:
+                summary: Example booking payload
+                value:
+                  eventId: 66af8f1e2c9b1b0012345678
+                  ticketCount: 2
+      responses:
+        "201":
+          description: Booking created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  booking:
+                    $ref: "#/components/schemas/BookingObject"
+                required: [success, booking]
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Tickets unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/bookings/my-tickets:
+    get:
+      tags: [Bookings]
+      summary: My tickets
+      description: Returns the authenticated user's bookings and event summary info.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Ticket list returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyTicketsResponse"
+        "401":
+          description: Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
