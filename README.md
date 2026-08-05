@@ -272,7 +272,7 @@ npm install
 PORT=5000
 NODE_ENV=development
 
-JWT_SECRET=your_secret_here
+JWT_SECRET=*********
 JWT_EXPIRES_IN=2h
 CORS_ORIGIN=http://localhost:3000
 
@@ -280,7 +280,7 @@ MYSQL_HOST=localhost
 MYSQL_PORT=3306
 MYSQL_DATABASE=event_ticket_system
 MYSQL_USER=root
-MYSQL_PASSWORD=your_password_here
+MYSQL_PASSWORD=*********
 
 MONGODB_URI=mongodb://localhost:27017/event_ticket_system
 ```
