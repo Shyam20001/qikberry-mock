@@ -593,9 +593,18 @@ var app_default = app;
 import_dotenv2.default.config();
 var PORT = Number(process.env.PORT || 5e3);
 var start = async () => {
-  app_default.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  const server = app_default.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}/healthz`);
   });
+  const shutdown = () => {
+    console.log("\nGracefully shutting down...");
+    server.close(() => {
+      console.log("HTTP server closed");
+      process.exit(0);
+    });
+  };
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 };
 start().catch((error) => {
   console.error("Startup failed:", error);
