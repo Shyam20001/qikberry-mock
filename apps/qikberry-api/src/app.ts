@@ -38,7 +38,7 @@ if (process.env.NODE_ENV === 'development') {
   app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiDoc));
 }
 app.get('/healthz', (_req, res) => {
-  res.json({ success: true, message: 'OK' });
+  res.json({ success: true, message: 'OK', date: Date.now() });
 });
 
 app.use('/api', router);
