@@ -582,7 +582,7 @@ if (process.env.NODE_ENV === "development") {
   app.use("/docs", import_swagger_ui_express.default.serve, import_swagger_ui_express.default.setup(openApiDoc));
 }
 app.get("/healthz", (_req, res) => {
-  res.json({ success: true, message: "OK" });
+  res.json({ success: true, message: "OK", date: Date.now() });
 });
 app.use("/api", routes_default);
 app.use(notFound);
